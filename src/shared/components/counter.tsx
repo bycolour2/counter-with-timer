@@ -1,23 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import type { CounterConfig } from '../constants/counter-config';
 import { cn } from '../lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { TimerButton } from '../ui/timer-button';
 
-const COUNTER_CONFIG = {
-  buttons: [
-    { value: 1, label: '+1' },
-    { value: 2, label: '+2' },
-    { value: 3, label: '+3' },
-  ],
-  cooldownMultiplier: 0.5,
-  inactivityDelay: 5,
-  decreaseInterval: 1,
-};
-
 const formatter = new Intl.ListFormat('en', { style: 'long', type: 'conjunction' });
 
-export function Counter() {
+type CounterProps = {
+  config: CounterConfig;
+};
+
+export function Counter({ config }: CounterProps) {
   const [count, setCount] = useState(0);
   const [disabledButtons, setDisabledButtons] = useState<Set<number>>(new Set());
   const [isDecreasing, setIsDecreasing] = useState(false);
@@ -55,8 +49,8 @@ export function Counter() {
           }
           return prev - 1;
         });
-      }, COUNTER_CONFIG.decreaseInterval * 1000);
-    }, COUNTER_CONFIG.inactivityDelay * 1000);
+      }, config.decreaseInterval * 1000);
+    }, config.inactivityDelay * 1000);
   }, [clearTimers]);
 
   const handleButtonClick = (buttonValue: number) => {
@@ -72,7 +66,7 @@ export function Counter() {
           return newSet;
         });
       },
-      COUNTER_CONFIG.cooldownMultiplier * buttonValue * 1000,
+      config.cooldownMultiplier * buttonValue * 1000,
     );
 
     startInactivityTimer();
@@ -107,9 +101,9 @@ export function Counter() {
 
       <CardContent className="space-y-4">
         <div className="grid grid-cols-3 gap-3">
-          {COUNTER_CONFIG.buttons.map((button) => (
+          {config.buttons.map((button) => (
             <TimerButton
-              duration={COUNTER_CONFIG.cooldownMultiplier * button.value}
+              duration={config.cooldownMultiplier * button.value}
               key={button.value}
               onClick={() => handleButtonClick(button.value)}
               disabled={disabledButtons.has(button.value)}
@@ -125,12 +119,12 @@ export function Counter() {
           <p>
             Button cooldowns:{' '}
             {formatter.format(
-              COUNTER_CONFIG.buttons.map(
-                (button) => `${(button.value * COUNTER_CONFIG.cooldownMultiplier).toFixed(1)}s`,
+              config.buttons.map(
+                (button) => `${(button.value * config.cooldownMultiplier).toFixed(1)}s`,
               ),
             )}
           </p>
-          <p>Auto-decrease starts after {COUNTER_CONFIG.inactivityDelay}s of inactivity</p>
+          <p>Auto-decrease starts after {config.inactivityDelay}s of inactivity</p>
         </div>
       </CardContent>
     </Card>
