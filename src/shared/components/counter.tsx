@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { cn } from '../lib/utils';
-import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { TimerButton } from '../ui/timer-button';
 
 const COUNTER_CONFIG = {
   buttons: [
@@ -11,7 +11,7 @@ const COUNTER_CONFIG = {
     { value: 3, label: '+3' },
   ],
   cooldownMultiplier: 0.5,
-  inactivityDelay: 10,
+  inactivityDelay: 5,
   decreaseInterval: 1,
 };
 
@@ -79,6 +79,7 @@ export function Counter() {
   };
 
   useEffect(() => {
+    if (count <= 0) return;
     startInactivityTimer();
 
     return () => {
@@ -91,7 +92,7 @@ export function Counter() {
       <CardHeader className="text-center">
         <CardTitle
           className={cn(
-            'text-primary text-6xl font-bold',
+            'text-primary text-6xl font-bold transition-colors duration-300',
             isDecreasing && 'text-destructive animate-pulse',
           )}
         >
@@ -103,10 +104,12 @@ export function Counter() {
           <div className="invisible h-5 opacity-0" />
         )}
       </CardHeader>
+
       <CardContent className="space-y-4">
         <div className="grid grid-cols-3 gap-3">
           {COUNTER_CONFIG.buttons.map((button) => (
-            <Button
+            <TimerButton
+              duration={COUNTER_CONFIG.cooldownMultiplier * button.value}
               key={button.value}
               onClick={() => handleButtonClick(button.value)}
               disabled={disabledButtons.has(button.value)}
@@ -114,7 +117,7 @@ export function Counter() {
               className="h-12 text-lg font-semibold transition-all duration-200 hover:scale-105"
             >
               {button.label}
-            </Button>
+            </TimerButton>
           ))}
         </div>
 
