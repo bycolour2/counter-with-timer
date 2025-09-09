@@ -73,7 +73,10 @@ export function Counter({ config }: CounterProps) {
   };
 
   useEffect(() => {
-    if (count <= 0) return;
+    if (count <= 0) {
+      setIsDecreasing(false);
+      return;
+    }
     startInactivityTimer();
 
     return () => {
@@ -101,10 +104,10 @@ export function Counter({ config }: CounterProps) {
 
       <CardContent className="space-y-4">
         <div className="grid grid-cols-3 gap-3">
-          {config.buttons.map((button) => (
+          {config.buttons.map((button, index) => (
             <TimerButton
+              key={`${button.value}-${button.label}-${index}`}
               duration={config.cooldownMultiplier * button.value}
-              key={button.value}
               onClick={() => handleButtonClick(button.value)}
               disabled={disabledButtons.has(button.value)}
               variant={disabledButtons.has(button.value) ? 'secondary' : 'default'}
