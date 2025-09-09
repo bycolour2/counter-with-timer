@@ -9,10 +9,9 @@ export function App() {
 
   return (
     <main className="bg-background flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <h1>Hello Hystax</h1>
-        <CounterConfigurator config={config} setConfig={setConfig} />
+      <div className="flex w-full max-w-md flex-col gap-3">
         <Counter config={config} />
+        <CounterConfigurator config={config} onConfigChange={setConfig} />
       </div>
     </main>
   );
