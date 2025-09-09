@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { cn } from '../lib/utils';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 
@@ -19,6 +20,44 @@ const formatter = new Intl.ListFormat('en', { style: 'long', type: 'conjunction'
 export function Counter() {
   const [count, setCount] = useState(0);
   const [disabledButtons, setDisabledButtons] = useState<Set<number>>(new Set());
+  const [isDecreasing, setIsDecreasing] = useState(false);
+
+  const inactivityTimeoutRef = useRef<NodeJS.Timeout>(null);
+  const decreaseIntervalRef = useRef<NodeJS.Timeout>(null);
+
+  const clearTimers = useCallback(() => {
+    if (inactivityTimeoutRef.current) {
+      clearTimeout(inactivityTimeoutRef.current);
+      inactivityTimeoutRef.current = null;
+    }
+    if (decreaseIntervalRef.current) {
+      clearTimeout(decreaseIntervalRef.current);
+      decreaseIntervalRef.current = null;
+    }
+  }, []);
+
+  const startInactivityTimer = useCallback(() => {
+    clearTimers();
+    setIsDecreasing(false);
+
+    inactivityTimeoutRef.current = setTimeout(() => {
+      setIsDecreasing(true);
+
+      decreaseIntervalRef.current = setInterval(() => {
+        setCount((prev) => {
+          if (prev <= 0) {
+            setIsDecreasing(false);
+            if (decreaseIntervalRef.current) {
+              clearInterval(decreaseIntervalRef.current);
+              decreaseIntervalRef.current = null;
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, COUNTER_CONFIG.decreaseInterval * 1000);
+    }, COUNTER_CONFIG.inactivityDelay * 1000);
+  }, [clearTimers]);
 
   const handleButtonClick = (buttonValue: number) => {
     setCount((prev) => prev + buttonValue);
@@ -35,12 +74,34 @@ export function Counter() {
       },
       COUNTER_CONFIG.cooldownMultiplier * buttonValue * 1000,
     );
+
+    startInactivityTimer();
   };
+
+  useEffect(() => {
+    startInactivityTimer();
+
+    return () => {
+      clearTimers();
+    };
+  }, [startInactivityTimer, clearTimers]);
 
   return (
     <Card className="w-full">
       <CardHeader className="text-center">
-        <CardTitle className="text-primary text-6xl font-bold">{count}</CardTitle>
+        <CardTitle
+          className={cn(
+            'text-primary text-6xl font-bold',
+            isDecreasing && 'text-destructive animate-pulse',
+          )}
+        >
+          {count}
+        </CardTitle>
+        {isDecreasing ? (
+          <p className="text-destructive animate-pulse text-sm">Auto-decreasing...</p>
+        ) : (
+          <div className="invisible h-5 opacity-0" />
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-3 gap-3">
