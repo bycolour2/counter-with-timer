@@ -51,7 +51,7 @@ export function Counter({ config }: CounterProps) {
         });
       }, config.decreaseInterval * 1000);
     }, config.inactivityDelay * 1000);
-  }, [clearTimers]);
+  }, [clearTimers, config.inactivityDelay, config.decreaseInterval]);
 
   const handleButtonClick = (buttonValue: number) => {
     setCount((prev) => prev + buttonValue);
