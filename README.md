@@ -1,5 +1,7 @@
 # React Counter Application
 
+[![Vercel](https://vercelbadge.vercel.app/api/bycolour2/counter-with-timer?style=plastic)](https://counter-with-timer.vercel.app/)
+
 A configurable React counter application with dynamic button cooldowns and auto-decreasing functionality.
 
 ## Features
