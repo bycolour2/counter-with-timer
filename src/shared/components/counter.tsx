@@ -9,12 +9,14 @@ const formatter = new Intl.ListFormat('en', { style: 'long', type: 'conjunction'
 
 type CounterProps = {
   config: CounterConfig;
+  onSessionChange?: (isActive: boolean) => void;
 };
 
-export function Counter({ config }: CounterProps) {
+export function Counter({ config, onSessionChange }: CounterProps) {
   const [count, setCount] = useState(0);
   const [disabledButtons, setDisabledButtons] = useState<Set<number>>(new Set());
   const [isDecreasing, setIsDecreasing] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   const inactivityTimeoutRef = useRef<NodeJS.Timeout>(null);
   const decreaseIntervalRef = useRef<NodeJS.Timeout>(null);
@@ -56,6 +58,11 @@ export function Counter({ config }: CounterProps) {
   const handleButtonClick = (buttonValue: number) => {
     setCount((prev) => prev + buttonValue);
 
+    if (!hasInteracted) {
+      setHasInteracted(true);
+      onSessionChange?.(true);
+    }
+
     setDisabledButtons((prev) => new Set(prev).add(buttonValue));
 
     setTimeout(
@@ -71,6 +78,13 @@ export function Counter({ config }: CounterProps) {
 
     startInactivityTimer();
   };
+
+  useEffect(() => {
+    if (count === 0 && hasInteracted) {
+      setHasInteracted(false);
+      onSessionChange?.(false);
+    }
+  }, [count, hasInteracted, onSessionChange]);
 
   useEffect(() => {
     if (count <= 0) {
