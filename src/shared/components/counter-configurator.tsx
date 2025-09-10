@@ -95,8 +95,8 @@ export function CounterConfigurator({
             </div>
 
             <div className="flex items-center gap-2 text-lg font-semibold">
-              <Tooltip open={isBlocked ? false : undefined}>
-                <TooltipTrigger>
+              <Tooltip>
+                <TooltipTrigger className={isBlocked ? 'pointer-events-none' : ''}>
                   <Label htmlFor="toggle-custom-config" className="cursor-pointer">
                     Custom config
                   </Label>
