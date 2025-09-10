@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader } from '../ui/card';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
 type CounterConfiguratorProps = {
   config: CounterConfig;
@@ -16,7 +17,7 @@ type CounterConfiguratorProps = {
 
 export function CounterConfigurator({ config, onConfigChange }: CounterConfiguratorProps) {
   const [useCustomConfig, setUseCustomConfig] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [formConfig, setFormConfig] = useState(config);
 
   const handleCustomConfigChange = (enabled: boolean) => {
@@ -59,25 +60,48 @@ export function CounterConfigurator({ config, onConfigChange }: CounterConfigura
   };
 
   return (
-    <Card className={cn('w-full', isExpanded ? 'gap-4' : 'gap-0')}>
+    <Card className={cn('w-full', isExpanded ? 'gap-4 max-sm:gap-8' : 'gap-0')}>
       <CardHeader className="gap-0 pb-0">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1">
-            <p className="text-xl font-bold">Configurations</p>
-            <Button variant={'ghost'} size={'icon'} onClick={handleFormConfigReset}>
-              <RotateCcw />
-            </Button>
-          </div>
-          <div className="flex items-center gap-1 text-lg font-semibold">
-            <Label htmlFor="toggle-custom-config">Custom config</Label>
-            <Switch
-              id="toggle-custom-config"
-              checked={useCustomConfig}
-              onCheckedChange={handleCustomConfigChange}
-            />
+          <div className="flex w-full flex-row gap-2 max-sm:flex-col">
+            <div className="flex items-center gap-1">
+              <p className="text-xl font-bold">Configurations</p>
+              <Button
+                variant={'ghost'}
+                size={'icon'}
+                onClick={handleFormConfigReset}
+                className="group cursor-pointer"
+              >
+                <RotateCcw className="rotate-65 transition-all duration-300 group-hover:-rotate-15" />
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-2 text-lg font-semibold">
+              <Tooltip>
+                <TooltipTrigger>
+                  <Label htmlFor="toggle-custom-config" className="cursor-pointer">
+                    Custom config
+                  </Label>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-54 text-center">
+                  Switching the configuration while the counter is decrementing will restart the
+                  "inactivity" timer.
+                </TooltipContent>
+              </Tooltip>
+              <Switch
+                id="toggle-custom-config"
+                checked={useCustomConfig}
+                onCheckedChange={handleCustomConfigChange}
+                className="cursor-pointer"
+              />
+            </div>
           </div>
 
-          <Button size={'icon'} onClick={() => setIsExpanded(!isExpanded)}>
+          <Button
+            size={'icon'}
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="cursor-pointer"
+          >
             <ChevronDown
               className={cn('size-6 rotate-0 transition-all duration-300', {
                 '-rotate-180': isExpanded,
@@ -142,7 +166,7 @@ export function CounterConfigurator({ config, onConfigChange }: CounterConfigura
               <Label className="text-lg">Button Configuration</Label>
               <div className="space-y-2">
                 {formConfig.buttons.map((button, index) => (
-                  <div className="grid grid-cols-2 gap-2">
+                  <div key={index} className="grid grid-cols-2 gap-2">
                     <div className="space-y-2">
                       {index === 0 && <Label>Label</Label>}
                       <Input
@@ -158,6 +182,8 @@ export function CounterConfigurator({ config, onConfigChange }: CounterConfigura
                       {index === 0 && <Label>Value</Label>}
                       <Input
                         type="number"
+                        step={1}
+                        min={1}
                         placeholder="Value"
                         value={button.value}
                         onChange={(e) =>
