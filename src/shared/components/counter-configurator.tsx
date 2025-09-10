@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, RotateCcw } from 'lucide-react';
+import { ChevronDown, Lock, RotateCcw } from 'lucide-react';
 
 import { type CounterConfig, DEFAULT_COUNTER_CONFIG } from '../constants/counter-config';
 import { cn } from '../lib/utils';
@@ -13,14 +13,21 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 type CounterConfiguratorProps = {
   config: CounterConfig;
   onConfigChange: (config: CounterConfig) => void;
+  isBlocked?: boolean;
 };
 
-export function CounterConfigurator({ config, onConfigChange }: CounterConfiguratorProps) {
+export function CounterConfigurator({
+  config,
+  onConfigChange,
+  isBlocked = false,
+}: CounterConfiguratorProps) {
   const [useCustomConfig, setUseCustomConfig] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [formConfig, setFormConfig] = useState(config);
 
-  const handleCustomConfigChange = (enabled: boolean) => {
+  const handleCustomConfigToggle = (enabled: boolean) => {
+    if (isBlocked) return;
+
     setUseCustomConfig(enabled);
     if (!isExpanded && enabled) {
       setIsExpanded(true);
@@ -33,7 +40,7 @@ export function CounterConfigurator({ config, onConfigChange }: CounterConfigura
     }
   };
 
-  const handleFormConfigChange = <F extends keyof CounterConfig>(
+  const handleFormFieldChange = <F extends keyof CounterConfig>(
     field: F,
     value: (typeof formConfig)[F],
   ) => {
@@ -44,23 +51,29 @@ export function CounterConfigurator({ config, onConfigChange }: CounterConfigura
     }
   };
 
-  const handleFormConfigReset = () => {
+  const handleFormReset = () => {
     setFormConfig(DEFAULT_COUNTER_CONFIG);
     onConfigChange(DEFAULT_COUNTER_CONFIG);
   };
 
-  const handleFormConfigButtonChange = <F extends keyof CounterConfig['buttons'][0]>(
+  const handleFormButtonChange = <F extends keyof CounterConfig['buttons'][0]>(
     index: number,
     field: F,
     value: (typeof formConfig.buttons)[0][F],
   ) => {
     const newButtons = [...formConfig.buttons];
     newButtons[index] = { ...newButtons[index], [field]: value };
-    handleFormConfigChange('buttons', newButtons);
+    handleFormFieldChange('buttons', newButtons);
   };
 
   return (
-    <Card className={cn('w-full', isExpanded ? 'gap-4 max-sm:gap-8' : 'gap-0')}>
+    <Card
+      className={cn(
+        'w-full',
+        isExpanded ? 'gap-4 max-sm:gap-8' : 'gap-0',
+        isBlocked && 'opacity-60',
+      )}
+    >
       <CardHeader className="gap-0 pb-0">
         <div className="flex items-center justify-between gap-2">
           <div className="flex w-full flex-row gap-2 max-sm:flex-col">
@@ -69,29 +82,34 @@ export function CounterConfigurator({ config, onConfigChange }: CounterConfigura
               <Button
                 variant={'ghost'}
                 size={'icon'}
-                onClick={handleFormConfigReset}
+                onClick={handleFormReset}
+                disabled={isBlocked}
                 className="group cursor-pointer"
               >
-                <RotateCcw className="rotate-65 transition-all duration-300 group-hover:-rotate-15" />
+                {isBlocked ? (
+                  <Lock className="size-6" />
+                ) : (
+                  <RotateCcw className="rotate-65 transition-all duration-300 group-hover:-rotate-15" />
+                )}
               </Button>
             </div>
 
             <div className="flex items-center gap-2 text-lg font-semibold">
-              <Tooltip>
+              <Tooltip open={isBlocked ? false : undefined}>
                 <TooltipTrigger>
                   <Label htmlFor="toggle-custom-config" className="cursor-pointer">
                     Custom config
                   </Label>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-54 text-center">
-                  Switching the configuration while the counter is decrementing will restart the
-                  "inactivity" timer.
+                <TooltipContent className="max-w-48 text-center">
+                  Enable custom configuration for the timer settings.
                 </TooltipContent>
               </Tooltip>
               <Switch
                 id="toggle-custom-config"
                 checked={useCustomConfig}
-                onCheckedChange={handleCustomConfigChange}
+                onCheckedChange={handleCustomConfigToggle}
+                disabled={isBlocked}
                 className="cursor-pointer"
               />
             </div>
@@ -101,6 +119,7 @@ export function CounterConfigurator({ config, onConfigChange }: CounterConfigura
             size={'icon'}
             onClick={() => setIsExpanded(!isExpanded)}
             className="cursor-pointer"
+            disabled={isBlocked}
           >
             <ChevronDown
               className={cn('size-6 rotate-0 transition-all duration-300', {
@@ -108,6 +127,17 @@ export function CounterConfigurator({ config, onConfigChange }: CounterConfigura
               })}
             />
           </Button>
+        </div>
+
+        <div
+          className={cn(
+            'overflow-hidden transition-all duration-500 ease-out',
+            isBlocked ? 'max-h-20 pt-2 opacity-100' : 'max-h-0 opacity-0',
+          )}
+        >
+          <p className="text-muted-foreground mt-2 text-xs">
+            Configuration is locked during an active counter session. Wait for counter to reach 0.
+          </p>
         </div>
       </CardHeader>
 
@@ -129,9 +159,9 @@ export function CounterConfigurator({ config, onConfigChange }: CounterConfigura
                 min={0.1}
                 value={formConfig.cooldownMultiplier}
                 onChange={(e) =>
-                  handleFormConfigChange('cooldownMultiplier', Number(e.target.value))
+                  handleFormFieldChange('cooldownMultiplier', Number(e.target.value))
                 }
-                disabled={!useCustomConfig}
+                disabled={!useCustomConfig || isBlocked}
               />
             </div>
 
@@ -143,8 +173,8 @@ export function CounterConfigurator({ config, onConfigChange }: CounterConfigura
                 placeholder="Inactivity delay"
                 min={1}
                 value={formConfig.inactivityDelay}
-                onChange={(e) => handleFormConfigChange('inactivityDelay', Number(e.target.value))}
-                disabled={!useCustomConfig}
+                onChange={(e) => handleFormFieldChange('inactivityDelay', Number(e.target.value))}
+                disabled={!useCustomConfig || isBlocked}
               />
             </div>
 
@@ -157,8 +187,8 @@ export function CounterConfigurator({ config, onConfigChange }: CounterConfigura
                 min={0.5}
                 placeholder="Decrease interval"
                 value={formConfig.decreaseInterval}
-                onChange={(e) => handleFormConfigChange('decreaseInterval', e.target.valueAsNumber)}
-                disabled={!useCustomConfig}
+                onChange={(e) => handleFormFieldChange('decreaseInterval', e.target.valueAsNumber)}
+                disabled={!useCustomConfig || isBlocked}
               />
             </div>
 
@@ -172,10 +202,8 @@ export function CounterConfigurator({ config, onConfigChange }: CounterConfigura
                       <Input
                         placeholder="Label"
                         value={button.label}
-                        onChange={(e) =>
-                          handleFormConfigButtonChange(index, 'label', e.target.value)
-                        }
-                        disabled={!useCustomConfig}
+                        onChange={(e) => handleFormButtonChange(index, 'label', e.target.value)}
+                        disabled={!useCustomConfig || isBlocked}
                       />
                     </div>
                     <div className="space-y-2">
@@ -187,9 +215,9 @@ export function CounterConfigurator({ config, onConfigChange }: CounterConfigura
                         placeholder="Value"
                         value={button.value}
                         onChange={(e) =>
-                          handleFormConfigButtonChange(index, 'value', Number(e.target.value))
+                          handleFormButtonChange(index, 'value', Number(e.target.value))
                         }
-                        disabled={!useCustomConfig}
+                        disabled={!useCustomConfig || isBlocked}
                       />
                     </div>
                   </div>
